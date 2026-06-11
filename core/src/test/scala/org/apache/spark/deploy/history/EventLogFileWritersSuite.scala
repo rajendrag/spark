@@ -112,6 +112,24 @@ abstract class EventLogFileWritersSuite extends SparkFunSuite with LocalSparkCon
     assert(writer.compressionCodecName === EVENT_LOG_COMPRESSION_CODEC.defaultValue)
   }
 
+  test("create missing event log directory") {
+    val appId = getUniqueApplicationId
+    val attemptId = None
+    val logDir = new File(testDir, "missing-event-log-dir")
+    val logDirPath = new Path(logDir.getAbsolutePath)
+    assert(!logDir.exists())
+
+    val conf = getLoggingConf(logDirPath, None)
+    val writer = createWriter(appId, attemptId, logDirPath.toUri, conf,
+      SparkHadoopUtil.get.newConfiguration(conf))
+
+    writer.start()
+    writer.writeEvent("dummy", flushLogger = true)
+    writer.stop()
+
+    assert(fileSystem.exists(logDirPath) && fileSystem.getFileStatus(logDirPath).isDirectory)
+  }
+
   test("SPARK-52458: Support spark.eventLog.excludedPatterns") {
     val appId = getUniqueApplicationId
     val attemptId = None

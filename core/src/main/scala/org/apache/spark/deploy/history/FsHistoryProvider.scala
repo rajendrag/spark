@@ -340,6 +340,9 @@ private[history] class FsHistoryProvider(conf: SparkConf, clock: Clock)
       val path = new Path(dir)
       val dirFs = logDirFs(dir)
       try {
+        if (!dirFs.exists(path)) {
+          FileSystem.mkdirs(dirFs, path, EventLogFileWriter.LOG_FOLDER_PERMISSIONS)
+        }
         if (!dirFs.getFileStatus(path).isDirectory) {
           logWarning(log"Logging directory specified is not a directory: " +
             log"${MDC(HISTORY_DIR, dir)}, skipping.")
